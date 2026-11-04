@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Perrari.Api/Perrari.Api.csproj" />
+    <Project Path="src/Perrari.Application/Perrari.Application.csproj" />
+    <Project Path="src/Perrari.Domain/Perrari.Domain.csproj" />
+    <Project Path="src/Perrari.Infrastructure/Perrari.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Perrari.Api.IntegrationTests/Perrari.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Perrari.Application.Tests/Perrari.Application.Tests.csproj" />
+    <Project Path="tests/Perrari.Domain.Tests/Perrari.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
