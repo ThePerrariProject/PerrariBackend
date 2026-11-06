@@ -16,7 +16,7 @@ public static class AuthEventTypes
     public const string Logout = "LOGOUT";
 }
 
-public static class AuthEventStatusses
+public static class AuthEventStatuses
 {
     public const string Success = "SUCCESS";
     public const string Failure = "FAILURE";
