@@ -1,6 +1,6 @@
 namespace Perrari.Domain.Common;
 
-public static class RoleName
+public static class RoleNames
 {
     public const string Admin = "ADMIN";
     public const string Seller = "SELLER";
