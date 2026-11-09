@@ -5,7 +5,7 @@ using Perrari.Application;
 using Perrari.Application.Interfaces.Services;
 using Perrari.Infrastructure;
 using Perrari.Infrastructure.Persistence.Seed;
-using Scalar.AspNetCore
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +35,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
