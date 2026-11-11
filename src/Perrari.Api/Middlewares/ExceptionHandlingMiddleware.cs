@@ -54,14 +54,27 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 title = ex.Message;
                 break;
 
+            case NotFoundException:
+            case KeyNotFoundException:
+                status = StatusCodes.Status404NotFound;
+                title = ex.Message;
+                break;
+
             default:
-                logger.LogError(ex, "Error no encontrado en {Method} {Path}", context.Request.Method, context.Request.Path);
+                logger.LogError(ex, "Error no controlado en {Method} {Path}", context.Request.Method, context.Request.Path);
                 status = StatusCodes.Status500InternalServerError;
                 title = "Ocurrio un error inesperado";
                 break;
         }
 
-        var problem = new ProblemDetails { Status = status, Title = title };
+        var problem = new ProblemDetails 
+        { 
+            Status = status, 
+            Title = title,
+            Instance = context.Request.Path
+        };
+        problem.Extensions["traceId"] = context.TraceIdentifier;
+
         if (errors is not null)
             problem.Extensions["errors"] = errors;
 
