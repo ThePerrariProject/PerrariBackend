@@ -28,6 +28,15 @@ public class Role : BaseEntity
         };
     }
 
+    public void SetPermissions(IEnumerable<Guid> permissionIds)
+    {
+        var ids = permissionIds.ToHashSet();
+
+        _rolePermissions.RemoveAll(rp => !ids.Contains(rp.PermissionId));
+        foreach (var id in ids)
+            GrantPermission(id);
+    }
+
     public void GrantPermission(Guid permissionId)
     {
         if (_rolePermissions.Any(rp => rp.PermissionId == permissionId))
