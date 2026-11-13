@@ -25,4 +25,7 @@ public interface IAuthService
     Task<RecoveryCodesResponseDto> EnableTwoFactorAsync(EnableTwoFactorDto dto, CancellationToken ct = default);
 
     Task DisableTwoFactorAsync(DisableTwoFactorDto dto, CancellationToken ct = default);
+
+    /// <summary>Cambio de contrasena propio. Cierra todas las sesiones del usuario (incluida la actual).</summary>
+    Task ChangePasswordAsync(ChangePasswordDto dto, CancellationToken ct = default);
 }

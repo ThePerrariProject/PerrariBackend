@@ -12,6 +12,8 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
 
         return services;
     }
