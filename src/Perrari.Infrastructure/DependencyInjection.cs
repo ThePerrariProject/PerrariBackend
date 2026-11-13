@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Perrari.Application.Interfaces.Repositories;
 using Perrari.Application.Interfaces.Services;
 using Perrari.Infrastructure.Persistence;
+using Perrari.Infrastructure.Persistence.Interceptors;
 using Perrari.Infrastructure.Persistence.Repositories;
 using Perrari.Infrastructure.Security;
 
@@ -18,8 +19,13 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException(
                 "Falta ConnectionStrings:DefaultConnection. Configúrala con User Secrets o variables de entorno.");
 
-        services.AddDbContext<PerrariDbContext>(options =>
-            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+        services.AddScoped<AuditInterceptor>();
+
+        services.AddDbContext<PerrariDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
+            options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
+        });
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddSingleton(TimeProvider.System);
@@ -32,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IAuthEventRepository, AuthEventRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
