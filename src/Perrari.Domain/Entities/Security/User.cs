@@ -3,7 +3,7 @@ using Perrari.Domain.Exceptions;
 
 namespace Perrari.Domain.Entities.Security;
 
-public class User : BaseEntity
+public class User : BaseEntity, IAuditable
 {
     public const int MaxFailedLogins = 5;
     public static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(15);
