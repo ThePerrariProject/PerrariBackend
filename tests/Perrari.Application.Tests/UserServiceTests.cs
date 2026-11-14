@@ -1,6 +1,6 @@
 using FluentValidation;
 using Perrari.Application.Common.Exceptions;
-using Perrari.Application.DTOs.Users;
+using Perrari.Application.DTOs.Usuarios;
 using Perrari.Application.Services;
 using Perrari.Application.Validators.Users;
 using Perrari.Domain.Common;

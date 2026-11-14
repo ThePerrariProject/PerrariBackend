@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Perrari.Api.Extensions;
-using Perrari.Application.DTOs.Users;
+using Perrari.Application.DTOs.Usuarios;
 using Perrari.Application.Interfaces.Services;
 
 namespace Perrari.Api.Controllers;
