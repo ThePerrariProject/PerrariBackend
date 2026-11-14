@@ -41,6 +41,14 @@ public class AuthController(IAuthService auth) : ControllerBase
     public async Task<ActionResult<UserDto>> Me(CancellationToken ct)
         => Ok(await auth.GetProfileAsync(ct));
 
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto, CancellationToken ct)
+    {
+        await auth.ChangePasswordAsync(dto, ct);
+        return NoContent();
+    }
+
     [HttpPost("2fa/setup")]
     [Authorize]
     public async Task<ActionResult<SetupTwoFactorResponseDto>> SetupTwoFactor(CancellationToken ct)

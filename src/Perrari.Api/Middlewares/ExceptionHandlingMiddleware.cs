@@ -55,7 +55,6 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 break;
 
             case NotFoundException:
-            case KeyNotFoundException:
                 status = StatusCodes.Status404NotFound;
                 title = ex.Message;
                 break;
@@ -67,9 +66,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 break;
         }
 
-        var problem = new ProblemDetails 
-        { 
-            Status = status, 
+        var problem = new ProblemDetails
+        {
+            Status = status,
             Title = title,
             Instance = context.Request.Path
         };
