@@ -36,6 +36,7 @@ public static class DependencyInjection
             dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IAuthEventRepository, AuthEventRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();

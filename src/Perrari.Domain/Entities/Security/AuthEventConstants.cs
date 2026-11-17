@@ -1,5 +1,6 @@
 namespace Perrari.Domain.Entities.Security;
 
+/// <summary>Valores de auth_events.event_type.</summary>
 public static class AuthEventTypes
 {
     public const string LoginSuccess = "LOGIN_SUCCESS";
@@ -12,10 +13,16 @@ public static class AuthEventTypes
     public const string TwoFactorDisabled = "TWO_FACTOR_DISABLED";
     public const string RecoveryCodeUsed = "RECOVERY_CODE_USED";
     public const string TokenRefreshed = "TOKEN_REFRESHED";
-    public const string TokenReuseDetected = "TOKEN_REUSED_DETECTED";
+    public const string TokenReuseDetected = "TOKEN_REUSE_DETECTED";
     public const string Logout = "LOGOUT";
+    public const string PasswordChanged = "PASSWORD_CHANGED";
+    public const string TwoFactorReset = "TWO_FACTOR_RESET";
+    public const string AccountUnlocked = "ACCOUNT_UNLOCKED";
+    public const string UserDeactivated = "USER_DEACTIVATED";
+    public const string UserReactivated = "USER_REACTIVATED";
 }
 
+/// <summary>Valores de auth_events.status.</summary>
 public static class AuthEventStatuses
 {
     public const string Success = "SUCCESS";

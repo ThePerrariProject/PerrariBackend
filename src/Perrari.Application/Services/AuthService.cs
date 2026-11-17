@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Perrari.Application.Common;
 using Perrari.Application.Common.Exceptions;
 using Perrari.Application.DTOs.Auth;
 using Perrari.Application.Interfaces.Repositories;
@@ -25,7 +26,8 @@ public class AuthService(
     IValidator<VerifyTwoFactorDto> verifyValidator,
     IValidator<EnableTwoFactorDto> enableValidator,
     IValidator<DisableTwoFactorDto> disableValidator,
-    IValidator<RefreshTokenDto> refreshValidator) : IAuthService
+    IValidator<RefreshTokenDto> refreshValidator,
+    IValidator<ChangePasswordDto> changePasswordValidator) : IAuthService
 {
     // Mensajes tomados de la documentacion de contenido (pantalla de Login)
     private const string MsgInvalidCredentials = "Correo o contraseña incorrectos. Verifique sus datos.";
@@ -39,7 +41,7 @@ public class AuthService(
 
     private DateTime Now => timeProvider.GetUtcNow().UtcDateTime;
 
-    #region Paso 1. Login correo / pass
+    #region Paso 1. Login
 
     public async Task<LoginResponseDto> LoginAsync(LoginDto dto, CancellationToken ct = default)
     {
@@ -52,6 +54,15 @@ public class AuthService(
         {
             passwordHasher.SimulateVerification(dto.Password); // mismo tiempo de respuesta que un usuario real
             await RecordAsync(null, AuthEventTypes.LoginFailed, AuthEventStatuses.Failure, now, ct);
+            await unitOfWork.SaveChangesAsync(ct);
+            throw new UnauthorizedException(MsgInvalidCredentials);
+        }
+
+        // Usuario desactivado: misma respuesta que un correo inexistente, para no revelar que la cuenta existe
+        if (!user.IsActive)
+        {
+            passwordHasher.SimulateVerification(dto.Password);
+            await RecordAsync(user.Id, AuthEventTypes.LoginFailed, AuthEventStatuses.Failure, now, ct);
             await unitOfWork.SaveChangesAsync(ct);
             throw new UnauthorizedException(MsgInvalidCredentials);
         }
@@ -83,7 +94,8 @@ public class AuthService(
     }
 
     #endregion
-    #region Paso 2. TOTP
+
+    #region Paso 2. OTP
 
     public async Task<AuthSessionDto> VerifyTwoFactorAsync(VerifyTwoFactorDto dto, CancellationToken ct = default)
     {
@@ -96,6 +108,13 @@ public class AuthService(
         var user = await users.GetByIdAsync(userId, ct);
         if (user is null || !user.TwoFactorEnabled)
             throw new UnauthorizedException(MsgVerificationExpired);
+
+        if (!user.IsActive)
+        {
+            await RecordAsync(user.Id, AuthEventTypes.LoginFailed, AuthEventStatuses.Failure, now, ct);
+            await unitOfWork.SaveChangesAsync(ct);
+            throw new UnauthorizedException(MsgInvalidCredentials);
+        }
 
         if (user.IsLocked(now))
         {
@@ -119,6 +138,7 @@ public class AuthService(
     }
 
     #endregion
+
     #region Renovar / Cerrar sesion
 
     public async Task<AuthSessionDto> RefreshAsync(RefreshTokenDto dto, CancellationToken ct = default)
@@ -144,6 +164,16 @@ public class AuthService(
         var user = await users.GetByIdAsync(stored.UserId, ct)
                    ?? throw new UnauthorizedException(MsgSessionExpired);
 
+        if (!user.IsActive)
+        {
+            // Defensa extra: al desactivar al usuario ya se revocaron sus tokens, pero uno emitido en paralelo no debe sobrevivir
+            stored.Revoke(now);
+            await refreshTokens.RevokeAllActiveAsync(user.Id, now, ct);
+            await RecordAsync(user.Id, AuthEventTypes.LoginFailed, AuthEventStatuses.Failure, now, ct);
+            await unitOfWork.SaveChangesAsync(ct);
+            throw new UnauthorizedException(MsgSessionExpired);
+        }
+
         if (user.IsLocked(now))
             throw new AccountLockedException(MsgAccountLocked);
 
@@ -166,6 +196,7 @@ public class AuthService(
     }
 
     #endregion
+
     #region Perfil
 
     public async Task<UserDto> GetProfileAsync(CancellationToken ct = default)
@@ -173,7 +204,7 @@ public class AuthService(
 
     #endregion
 
-    #region Setup 2FA
+    #region 2FA
 
     public async Task<SetupTwoFactorResponseDto> SetupTwoFactorAsync(CancellationToken ct = default)
     {
@@ -245,7 +276,42 @@ public class AuthService(
     }
 
     #endregion
-    #region Metodos privados
+
+    #region Cambio de Contrasena
+
+    public async Task ChangePasswordAsync(ChangePasswordDto dto, CancellationToken ct = default)
+    {
+        await changePasswordValidator.ValidateAndThrowAsync(dto, ct);
+
+        var now = Now;
+        var user = await GetCurrentUserAsync(ct);
+
+        if (user.IsLocked(now))
+            throw new AccountLockedException(MsgAccountLocked);
+
+        // Un access token robado no basta para cambiar la contrasena: se exige la actual (y cuenta como intento fallido)
+        if (!passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
+        {
+            await RegisterFailureAsync(user, AuthEventTypes.LoginFailed, now, ct);
+            throw FieldError(nameof(dto.CurrentPassword), "La contraseña actual es incorrecta.");
+        }
+
+        if (dto.NewPassword == dto.CurrentPassword)
+            throw FieldError(nameof(dto.NewPassword), "La nueva contraseña debe ser distinta de la actual.");
+        if (PasswordPolicy.MatchesIdentity(dto.NewPassword, user.Email, user.Username))
+            throw FieldError(nameof(dto.NewPassword), PasswordPolicy.IdentityMessage);
+
+        user.ChangePassword(passwordHasher.Hash(dto.NewPassword), now);
+        await RecordAsync(user.Id, AuthEventTypes.PasswordChanged, AuthEventStatuses.Success, now, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        // Se cierran todas las sesiones: cualquier refresh token anterior (por ejemplo el de un atacante) deja de servir
+        await refreshTokens.RevokeAllActiveAsync(user.Id, now, ct);
+    }
+
+    #endregion
+
+    #region Metodos Privados
 
     private async Task<AuthSessionDto> IssueSessionAsync(
         User user, DateTime now, string eventType, bool resetLoginCounters, CancellationToken ct)
@@ -312,7 +378,13 @@ public class AuthService(
     private async Task<User> GetCurrentUserAsync(CancellationToken ct)
     {
         var id = currentUser.UserId ?? throw new UnauthorizedException(MsgSessionExpired);
-        return await users.GetByIdAsync(id, ct) ?? throw new UnauthorizedException(MsgSessionExpired);
+        var user = await users.GetByIdAsync(id, ct) ?? throw new UnauthorizedException(MsgSessionExpired);
+
+        // Un access token emitido antes de la baja deja de servir en los endpoints de este servicio
+        if (!user.IsActive)
+            throw new UnauthorizedException(MsgSessionExpired);
+
+        return user;
     }
 
     private static ValidationException FieldError(string field, string message)

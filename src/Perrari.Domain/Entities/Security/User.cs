@@ -18,6 +18,7 @@ public class User : BaseEntity, IAuditable
     public DateTime? EmailVerifiedAt { get; private set; }
     public string PasswordHash { get; private set; } = default!; // columna "password"
     public bool TwoFactorEnabled { get; private set; }
+    public bool IsActive { get; private set; } = true;
     public int FailedLoginCount { get; private set; }
     public DateTime? LockedUntil { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -66,6 +67,57 @@ public class User : BaseEntity, IAuditable
             .Distinct()
             .OrderBy(c => c)
             .ToList();
+
+    public bool HasRole(string roleName) => _userRoles.Any(ur => ur.Role.Name == roleName);
+
+    public void SetRoles(IEnumerable<Guid> roleIds, DateTime now)
+    {
+        var ids = roleIds.ToHashSet();
+        if (ids.Count == 0)
+            throw new DomainException("El usuario debe tener al menos un rol");
+    }
+
+    // Datos de cuenta
+
+    public void UpdateProfile(string username, string email, DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            throw new DomainException("El nombre de usuario es requerido");
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            throw new DomainException("El correo electronico del usuario es invalido");
+
+        Username = username.Trim();
+        Email = email.Trim().ToLowerInvariant();
+        UpdatedAt = now;
+    }
+
+    public void ChangePassword(string passwordHash, DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new DomainException("La contrasena es requerida");
+
+        PasswordHash = passwordHash;
+        UpdatedAt = now;
+    }
+
+    public void Deactivate(DateTime now)
+    {
+        IsActive = false;
+        UpdatedAt = now;
+    }
+
+    public void Reactivate(DateTime now)
+    {
+        IsActive = true;
+        UpdatedAt = now;
+    }
+
+    public void Unlock(DateTime now)
+    {
+        FailedLoginCount = 0;
+        LockedUntil = null;
+        UpdatedAt = now;
+    }
 
     // Bloqueo por intentos fallidos
 

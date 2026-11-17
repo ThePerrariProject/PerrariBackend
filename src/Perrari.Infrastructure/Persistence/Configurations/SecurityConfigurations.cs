@@ -20,6 +20,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.PasswordHash).HasColumnName("password").HasMaxLength(255).IsRequired();
         b.Property(x => x.TwoFactorEnabled).HasDefaultValue(false);
         b.Property(x => x.FailedLoginCount).HasDefaultValue(0);
+        // Default true para que los usuarios que ya existen (el admin del seed) queden activos al migrar
+        b.Property(x => x.IsActive).HasDefaultValue(true);
+        b.HasIndex(x => x.IsActive);
 
         b.HasOne(x => x.Totp).WithOne().HasForeignKey<UserTotp>(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         b.HasMany(x => x.RecoveryCodes).WithOne().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
