@@ -310,6 +310,12 @@ namespace Perrari.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("failed_login_count");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<DateTime?>("LockedUntil")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("locked_until");
@@ -342,6 +348,9 @@ namespace Perrari.Infrastructure.Persistence.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_users_is_active");
 
                     b.ToTable("users", (string)null);
                 });
@@ -467,12 +476,12 @@ namespace Perrari.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_users_totp_users_user_id");
                 });
 
-            modelBuilder.Entity("Perrari.Domain.Entities.Role", b =>
+            modelBuilder.Entity("Perrari.Domain.Entities.Security.Role", b =>
                 {
                     b.Navigation("RolePermissions");
                 });
 
-            modelBuilder.Entity("Perrari.Domain.Entities.User", b =>
+            modelBuilder.Entity("Perrari.Domain.Entities.Security.User", b =>
                 {
                     b.Navigation("RecoveryCodes");
 
