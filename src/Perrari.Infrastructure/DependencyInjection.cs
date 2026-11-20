@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Perrari.Application.Common;
 using Perrari.Application.Interfaces.Repositories;
 using Perrari.Application.Interfaces.Services;
 using Perrari.Infrastructure.Persistence;
@@ -40,7 +41,13 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IAuthEventRepository, AuthEventRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Minutos que dura el apartado de un vehiculo (appsettings: Inventory:LockMinutes). Por defecto 30.
+        var lockMinutes = int.TryParse(configuration[$"{InventorySettings.SectionName}:LockMinutes"], out var m) && m is >= 1 and <= 1440 ? m : 30;
+        services.AddSingleton(new InventorySettings { LockMinutes = lockMinutes });
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
