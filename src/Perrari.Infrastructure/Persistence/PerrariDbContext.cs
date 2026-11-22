@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Perrari.Domain.Entities.Auditorias;
+using Perrari.Domain.Entities.Inventarios;
 using Perrari.Domain.Entities.Security;
 
 namespace Perrari.Infrastructure.Persistence;
@@ -16,6 +17,9 @@ public class PerrariDbContext(DbContextOptions<PerrariDbContext> options) : DbCo
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuthEvent> AuthEvents => Set<AuthEvent>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<VehicleMovement> VehicleMovements => Set<VehicleMovement>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
