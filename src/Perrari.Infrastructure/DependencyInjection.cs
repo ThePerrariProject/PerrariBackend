@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IVehicleRepository, VehicleRepository>();
+        services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Minutos que dura el apartado de un vehiculo (appsettings: Inventory:LockMinutes). Por defecto 30.
