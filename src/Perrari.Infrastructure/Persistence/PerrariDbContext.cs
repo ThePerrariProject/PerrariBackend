@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Perrari.Domain.Entities.Auditorias;
+using Perrari.Domain.Entities.Clientes;
 using Perrari.Domain.Entities.Inventarios;
 using Perrari.Domain.Entities.Security;
 
@@ -20,6 +21,7 @@ public class PerrariDbContext(DbContextOptions<PerrariDbContext> options) : DbCo
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<VehicleMovement> VehicleMovements => Set<VehicleMovement>();
+    public DbSet<Client> Clients => Set<Client>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
